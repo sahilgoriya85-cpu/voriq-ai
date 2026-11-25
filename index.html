@@ -1,0 +1,94 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VORIQ AI</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:white;font-family:Arial}
+header{padding:20px;background:#121a30;display:flex;justify-content:space-between}
+.logo{font-size:25px;font-weight:bold;color:#a78bfa}
+.beta{background:#26365b;padding:8px;border-radius:20px}
+main{max-width:650px;margin:auto;padding:22px}
+.hero{text-align:center;padding:25px 0}
+.hero h1{font-size:30px}
+.hero p{color:#aab5ce;line-height:1.6}
+.card{background:#151e35;border:1px solid #293653;padding:20px;border-radius:18px;margin-top:18px}
+label{display:block;margin:18px 0 9px;font-weight:bold}
+textarea,select{width:100%;padding:14px;border-radius:11px;border:1px solid #394867;background:#0c1428;color:white;font-size:15px}
+textarea{height:140px}
+button{width:100%;padding:15px;border:0;border-radius:12px;font-size:16px;font-weight:bold;margin-top:15px}
+.generate{background:linear-gradient(90deg,#7c3aed,#2563eb);color:white}
+.voice{background:#273653;color:white}
+.result{display:none;background:#101a30;padding:15px;border-radius:12px;margin-top:18px;line-height:1.7;white-space:pre-wrap}
+footer{text-align:center;color:#8290aa;padding:30px;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">VORIQ AI ✨</div>
+<div class="beta">BETA</div>
+</header>
+<main>
+<section class="hero">
+<h1>AI Cartoon Video Generator 🎬</h1>
+<p>अपनी कहानी लिखो और Cartoon बनाने के लिए तैयार हो जाओ!</p>
+</section>
+<div class="card">
+<h2>🎨 Create Your Cartoon</h2>
+<label>अपनी कहानी लिखें</label>
+<textarea id="story" placeholder="एक मजेदार साँप और चूहे की कहानी..."></textarea>
+<label>Video Style</label>
+<select id="style">
+<option>3D Cartoon</option>
+<option>Funny Animation</option>
+<option>Kids Cartoon</option>
+<option>Fantasy Cartoon</option>
+</select>
+<label>Video Duration</label>
+<select id="duration">
+<option>30 Seconds</option>
+<option>1 Minute</option>
+<option>3 Minutes</option>
+<option>5 Minutes</option>
+</select>
+<label>Voice Language</label>
+<select id="language">
+<option value="hi-IN">Hindi Voice</option>
+<option value="en-US">English Voice</option>
+</select>
+<button class="generate" onclick="generate()">✨ Generate Cartoon</button>
+<button class="voice" onclick="speak()">🔊 Listen Voice</button>
+<div class="result" id="result">
+<h3>🎉 Your Cartoon Project</h3>
+<p id="output"></p>
+<p>यह Demo Preview है। असली वीडियो बनाने के लिए AI Video API जोड़नी होगी।</p>
+</div>
+</div>
+</main>
+<footer>VORIQ AI © 2026 | Create Your Own Stories ❤️</footer>
+<script>
+function generate(){
+const story=document.getElementById("story").value.trim();
+if(!story){alert("पहले अपनी कहानी लिखें!");return;}
+const style=document.getElementById("style").value;
+const duration=document.getElementById("duration").value;
+document.getElementById("output").innerText=
+"Story: "+story+"\nStyle: "+style+"\nDuration: "+duration;
+document.getElementById("result").style.display="block";
+}
+function speak(){
+const story=document.getElementById("story").value.trim();
+if(!story){alert("पहले कहानी लिखें!");return;}
+if(!("speechSynthesis" in window)){alert("Voice support नहीं है");return;}
+speechSynthesis.cancel();
+const voice=new SpeechSynthesisUtterance(story);
+voice.lang=document.getElementById("language").value;
+voice.rate=0.9;
+speechSynthesis.speak(voice);
+}
+</script>
+</body>
+</html>
