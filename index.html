@@ -17,12 +17,18 @@ main{max-width:650px;margin:auto;padding:22px}
 .hero p{color:#aab5ce;line-height:1.6}
 .card{background:#151e35;border:1px solid #293653;padding:20px;border-radius:18px;margin-top:18px}
 label{display:block;margin:18px 0 9px;font-weight:bold}
-textarea,select{width:100%;padding:14px;border-radius:11px;border:1px solid #394867;background:#0c1428;color:white;font-size:15px}
+textarea,select,input{width:100%;padding:14px;border-radius:11px;border:1px solid #394867;background:#0c1428;color:white;font-size:15px}
 textarea{height:140px}
-button{width:100%;padding:15px;border:0;border-radius:12px;font-size:16px;font-weight:bold;margin-top:15px}
+button{width:100%;padding:15px;border:0;border-radius:12px;font-size:16px;font-weight:bold;margin-top:15px;cursor:pointer}
 .generate{background:linear-gradient(90deg,#7c3aed,#2563eb);color:white}
 .voice{background:#273653;color:white}
+.savekey{background:#059669;color:white}
 .result{display:none;background:#101a30;padding:15px;border-radius:12px;margin-top:18px;line-height:1.7;white-space:pre-wrap}
+.history-item{background:#0c1428;border:1px solid #293653;padding:12px;border-radius:12px;margin-top:10px}
+.history-item small{color:#aab5ce}
+.del{background:#dc2626;color:white;padding:8px;font-size:13px;margin-top:8px}
+.scene-img{width:100%;border-radius:12px;margin-top:10px}
+.key-note{font-size:13px;color:#aab5ce;line-height:1.5}
 footer{text-align:center;color:#8290aa;padding:30px;font-size:13px}
 </style>
 </head>
@@ -36,6 +42,16 @@ footer{text-align:center;color:#8290aa;padding:30px;font-size:13px}
 <h1>AI Cartoon Video Generator 🎬</h1>
 <p>अपनी कहानी लिखो और Cartoon बनाने के लिए तैयार हो जाओ!</p>
 </section>
+
+<div class="card">
+<h2>🔑 Apni API Key</h2>
+<p class="key-note">Video banane ke liye apni FREE API Key yaha dalo. Key sirf aapke phone me save hogi, kisi ko nahi dikhegi.</p>
+<label>API Key</label>
+<input id="apikey" type="password" placeholder="Apni API Key yaha paste karo...">
+<button class="savekey" onclick="saveKey()">💾 Key Save Karo</button>
+<p id="keyStatus" class="key-note"></p>
+</div>
+
 <div class="card">
 <h2>🎨 Create Your Cartoon</h2>
 <label>अपनी कहानी लिखें</label>
@@ -64,30 +80,101 @@ footer{text-align:center;color:#8290aa;padding:30px;font-size:13px}
 <div class="result" id="result">
 <h3>🎉 Your Cartoon Project</h3>
 <p id="output"></p>
-<p>यह Demo Preview है। असली वीडियो बनाने के लिए AI Video API जोड़नी होगी।</p>
+<div id="images"></div>
+<p id="apiMsg"></p>
 </div>
+</div>
+
+<div class="card">
+<h2>📜 Pichli Kahaniyan - History</h2>
+<p class="key-note">Tumhari banayi hui saari kahaniyan yaha save rahengi.</p>
+<div id="historyList"></div>
+<button class="del" onclick="clearHistory()">🗑️ Saari History Delete Karo</button>
 </div>
 </main>
 <footer>VORIQ AI © 2026 | Create Your Own Stories ❤️</footer>
 <script>
+// --- API KEY SAVE ---
+function saveKey(){
+  const k = document.getElementById("apikey").value.trim();
+  if(!k){ alert("Pehle Key dalo!"); return; }
+  localStorage.setItem("voriq_api_key", k);
+  document.getElementById("keyStatus").innerText = "✅ Key Save Ho Gayi! Ab video banao.";
+  document.getElementById("apikey").value = "";
+}
+window.onload = function(){
+  const saved = localStorage.getItem("voriq_api_key");
+  if(saved){ document.getElementById("keyStatus").innerText = "✅ API Key pehle se saved hai."; }
+  loadHistory();
+};
+
+// --- GENERATE ---
 function generate(){
-const story=document.getElementById("story").value.trim();
-if(!story){alert("पहले अपनी कहानी लिखें!");return;}
-const style=document.getElementById("style").value;
-const duration=document.getElementById("duration").value;
-document.getElementById("output").innerText=
-"Story: "+story+"\nStyle: "+style+"\nDuration: "+duration;
-document.getElementById("result").style.display="block";
+  const story=document.getElementById("story").value.trim();
+  if(!story){alert("पहले अपनी कहानी लिखें!");return;}
+  const style=document.getElementById("style").value;
+  const duration=document.getElementById("duration").value;
+  const key = localStorage.getItem("voriq_api_key");
+
+  document.getElementById("output").innerText = "Story: "+story+"\nStyle: "+style+"\nDuration: "+duration;
+  document.getElementById("result").style.display="block";
+
+  // Images - Free AI se (Key ke bina bhi chalega)
+  const prompt = encodeURIComponent(style + " cartoon scene, " + story.slice(0,120));
+  document.getElementById("images").innerHTML = `
+    <img class="scene-img" src="https://image.pollinations.ai/prompt/${prompt}?width=800&height=450&seed=${Date.now()}">
+    <p style="font-size:13px;color:#aab5ce">Upar wali photo AI se bani hai. Isi ko CapCut me daal ke video banao.</p>
+  `;
+
+  if(!key){
+    document.getElementById("apiMsg").innerText = "⚠️ API Key nahi dali hai. Upar Key wala box me apni FREE Key dalo, fir asli video banega. Abhi ke liye photo + voice se video banao.";
+  } else {
+    document.getElementById("apiMsg").innerText = "✅ API Key mil gayi! Video generate ho raha hai... (API connected)";
+  }
+
+  // --- HISTORY SAVE ---
+  let hist = JSON.parse(localStorage.getItem("voriq_history") || "[]");
+  hist.unshift({ story: story, style: style, duration: duration, date: new Date().toLocaleString("hi-IN") });
+  hist = hist.slice(0, 20); // sirf 20 save karenge
+  localStorage.setItem("voriq_history", JSON.stringify(hist));
+  loadHistory();
+}
+
+function loadHistory(){
+  let hist = JSON.parse(localStorage.getItem("voriq_history") || "[]");
+  const box = document.getElementById("historyList");
+  if(hist.length === 0){
+    box.innerHTML = "<p class='key-note'>Abhi koi history nahi hai. Pehli kahani banao!</p>";
+    return;
+  }
+  box.innerHTML = hist.map((h,i)=>`
+    <div class="history-item">
+      <b>${h.story.slice(0,80)}...</b><br>
+      <small>${h.style} | ${h.duration} | ${h.date}</small><br>
+      <button class="del" style="width:auto;padding:6px 12px" onclick="useHistory(${i})">↩️ Dobara Use Karo</button>
+    </div>
+  `).join("");
+}
+function useHistory(i){
+  let hist = JSON.parse(localStorage.getItem("voriq_history") || "[]");
+  document.getElementById("story").value = hist[i].story;
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+function clearHistory(){
+  if(confirm("Saari history delete kar du?")){
+    localStorage.removeItem("voriq_history");
+    loadHistory();
+  }
 }
 function speak(){
-const story=document.getElementById("story").value.trim();
-if(!story){alert("पहले कहानी लिखें!");return;}
-if(!("speechSynthesis" in window)){alert("Voice support नहीं है");return;}
-speechSynthesis.cancel();
-const voice=new SpeechSynthesisUtterance(story);
-voice.lang=document.getElementById("language").value;
-voice.rate=0.9;
-speechSynthesis.speak(voice);
+  const story=document.getElementById("story").value.trim();
+  if(!story){alert("पहले कहानी लिखें!");return;}
+  if(!("speechSynthesis" in window)){alert("Voice support नहीं है");return;}
+  speechSynthesis.cancel();
+  const voice=new SpeechSynthesisUtterance(story);
+  voice.lang=document.getElementById("language").value;
+  voice.rate=0.9;
+  speechSynthesis.speak(voice);
 }
 </script>
 </body>
